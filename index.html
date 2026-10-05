@@ -8,8 +8,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
-    
-    <!-- 📍 เปลี่ยนมาใช้ PolylineDecorator (เสถียรและแก้ปัญหาเส้นค้างตอนซูม) -->
     <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js"></script>
 
     <style>
@@ -56,19 +54,21 @@
         });
 
         // ==========================================
-        // ข้อมูล Layer ทั้งหมดของคุณ
+        // 📍 ใส่ reverse: true ต่อท้าย Layer ที่ต้องการกลับทิศลูกศร
         // ==========================================
         var layerConfig = {
-            "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด" },
+            // ตัวอย่าง: สมมติว่าคลองบางพูดลูกศรชี้ผิดทิศ ให้ใส่ reverse: true ต่อท้ายแบบนี้
+            "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำ", reverse: true }, 
+            
             "Klong Soui": { name: "คลองส่วย", color: "#00FFFF", info: "สถานะ: คลองเลียบคลองประปา" },
             "Untitled path": { name: "คลองบางพัง", color: "#00FFFF", info: "สถานะ: คลอง" },
             "klong Banmai": { name: "คลองบ้านใหม่", color: "#00FFFF", info: "สถานะ: คลอง" },
             "Klong Ban Kao": { name: "คลองบ้านเก่า", color: "#00FFFF", info: "สถานะ: คลอง" },
-            "Wat Saluk": { name: "ท่อระบายน้ำซอยวัดสลักเหนือ", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
-            "Tiwanon Pipe": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งเมืองทอง ขนาด .....", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
-            "Tiwanon Pipe 2": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งวัดสลักเหนือ ขนาด .....", color: "#00FFFF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
+            "Wat Saluk": { name: "ท่อระบายน้ำซอยวัดสลักเหนือ", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ" },
+            "Tiwanon Pipe": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งเมืองทอง", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ" },
+            "Tiwanon Pipe 2": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งวัดสลักเหนือ", color: "#00FFFF", info: "สถานะ: ท่อระบายน้ำ" },
             "Black Turtle": { name: "ลำรางหนองเต่าดำ", color: "#00FFFF", info: "สถานะ: ลำราง" },
-            "popular pump 4": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "popular pump 4": { name: "ระบบระบายน้ำ popular ไปยัง สถานี 4", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Pump 4 2": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Pump 4 -3": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Pump 4 -4": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
@@ -76,7 +76,7 @@
             "Pump 5-1": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Pump 5-2": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Pump 5-3": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
-            "Retention - Pump 3": { name: "ระบบระบายน้ำ รีเทนชั่นแทงค์ไปยัง สถานีสูบ 3 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Retention - Pump 3": { name: "ระบบระบายน้ำ รีเทนชั่นแทงค์ไปยัง สถานี 3", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "IEC - Pump 3": { name: "ระบบระบายน้ำไปยัง สถานีสูบ 3 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Lake to Pump 10": { name: "ระบบระบายน้ำทะเลสาบ ไปยัง สถานีสูบ 10 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "BS - Pump 2": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ 2 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
@@ -133,13 +133,25 @@
                         if (layer.setStyle) {
                             layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
                             
-                            // 📍 สร้างลูกศรด้วย PolylineDecorator
                             if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+                                
+                                // 📍 เช็คว่าเส้นนี้โดนสั่งให้ "กลับทิศ" หรือไม่
+                                if (config.reverse) {
+                                    var latlngs = layer.getLatLngs();
+                                    // สลับข้อมูลพิกัดจากหน้าไปหลัง
+                                    if (latlngs.length > 0 && Array.isArray(latlngs[0])) {
+                                        layer.setLatLngs(latlngs.map(function(arr) { return arr.slice().reverse(); }));
+                                    } else {
+                                        layer.setLatLngs(latlngs.slice().reverse());
+                                    }
+                                }
+
+                                // วาดลูกศร
                                 L.polylineDecorator(layer, {
                                     patterns: [
                                         {
-                                            offset: 25, // ระยะเริ่มลูกศร
-                                            repeat: 80, // ระยะห่างระหว่างลูกศร
+                                            offset: 25, 
+                                            repeat: 80, 
                                             symbol: L.Symbol.arrowHead({
                                                 pixelSize: 12, 
                                                 polygon: true, 
