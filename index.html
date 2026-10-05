@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>ระบบแผนที่ เมืองทองธานี (MTT)</title>
 
-    <!-- โหลด Leaflet CSS และ JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- เปลี่ยนมาใช้ Plugin สำหรับอ่านไฟล์ KML โดยตรง (Omnivore) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
 
     <style>
@@ -17,25 +14,14 @@
         #map { height: 100vh; width: 100vw; }
 
         .legend-box {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            line-height: 1.5rem;
-            color: #333;
-            font-size: 14px;
+            background: white; padding: 10px 15px; border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2); line-height: 1.5rem;
+            color: #333; font-size: 14px;
         }
-        .legend-box h4 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            text-align: center;
-        }
+        .legend-box h4 { margin: 0 0 10px 0; font-size: 16px; text-align: center; }
         .color-box {
-            display: inline-block;
-            width: 20px;
-            height: 10px;
-            margin-right: 8px;
-            border: 1px solid #999;
+            display: inline-block; width: 20px; height: 10px;
+            margin-right: 8px; border: 1px solid #999;
         }
         
         @media (max-width: 600px) {
@@ -56,20 +42,42 @@
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
         // ==========================================
-        // ตั้งค่าข้อมูล Layer (เชื่อมชื่อใน KML กับสี)
+        // 1. สร้างรูปหมุด (ใช้แบบที่ 1: เครื่องสูบน้ำสีน้ำเงิน)
+        // ==========================================
+        var pumpIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png', 
+            iconSize: [30, 30], 
+            iconAnchor: [15, 30], 
+            popupAnchor: [0, -30] 
+        });
+
+        // ==========================================
+        // 2. ตั้งค่าข้อมูล Layer (เชื่อมชื่อใน KML กับสี/รูปไอคอน)
         // ==========================================
         var layerConfig = {
-            "คลอง A": { name: "คลองสายหลัก", color: "#007bff", info: "รับน้ำจากภายนอก" },
-            "คลอง B": { name: "คลองระบายน้ำ", color: "#28a745", info: "สถานะ: ปกติ" },
-            "สถานี 1": { name: "สถานีสูบน้ำ", color: "#dc3545", info: "สถานะ: ปิดเครื่อง" }
+            "คลอง A": { 
+                name: "คลองสายหลัก", 
+                color: "#007bff", 
+                info: "รับน้ำจากภายนอก สถานะ: ปกติ" 
+            },
+            "คลอง B": { 
+                name: "คลองระบายน้ำ", 
+                color: "#28a745", 
+                info: "สถานะ: ระดับน้ำปกติ" 
+            },
+            "สถานี 1": { 
+                name: "สถานีสูบน้ำหลัก", 
+                info: "สถานะ: กำลังเดินเครื่องสูบ",
+                customIcon: pumpIcon // สั่งให้ใช้รูปปั๊มน้ำ
+            }
         };
 
         // ==========================================
-        // สร้างกล่อง Legend มุมขวาล่าง
+        // 3. สร้างกล่อง Legend มุมขวาล่าง
         // ==========================================
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
@@ -78,7 +86,7 @@
                 <h4>สัญลักษณ์</h4>
                 <div><span class="color-box" style="background: #007bff;"></span> คลองสายหลัก</div>
                 <div><span class="color-box" style="background: #28a745;"></span> คลองระบายน้ำ</div>
-                <div><span class="color-box" style="background: #dc3545;"></span> สถานีสูบน้ำ / จุดแจ้งเตือน</div>
+                <div><img src="https://cdn-icons-png.flaticon.com/512/3299/3299935.png" style="width:16px; vertical-align:middle; margin-right:6px;"> สถานีสูบน้ำ</div>
                 <div><span class="color-box" style="background: gray;"></span> อื่นๆ (ยังไม่ได้ระบุสี)</div>
             `;
             return div;
@@ -86,24 +94,22 @@
         legend.addTo(map);
 
         // ==========================================
-        // โหลดและจัดการไฟล์ KML
+        // 4. โหลดไฟล์ KML และประมวลผลล็อคหน้าจอ
         // ==========================================
-        // โหลดไฟล์ MTT.kml (ต้องมีไฟล์นี้อยู่ใน Github)
         var kmlLayer = omnivore.kml('MTT.kml').addTo(map);
 
-        // ทำงานเมื่อ KML โหลดสำเร็จ
         kmlLayer.on('ready', function() {
-            
-            // ซูมหาพื้นที่และล็อคหน้าจอ
             var kmlBounds = kmlLayer.getBounds();
-            map.fitBounds(kmlBounds, { padding: [30, 30] });
+            
+            map.fitBounds(kmlBounds, { padding: [20, 20] });
 
             setTimeout(function() {
-                map.setMaxBounds(map.getBounds().pad(0.2)); 
+                var currentBounds = map.getBounds();
+                map.setMaxBounds(currentBounds.pad(0.05)); 
                 map.setMinZoom(map.getZoom());
             }, 500);
 
-            // วนลูปจัดการสีและ Popup
+            // แยกว่าเป็น เส้น (เปลี่ยนสี) หรือ เป็นหมุด (เปลี่ยนไอคอน)
             kmlLayer.eachLayer(function(layer) {
                 if (!layer.feature || !layer.feature.properties) return;
                 
@@ -111,12 +117,22 @@
 
                 if (layerConfig[kmlName]) {
                     var config = layerConfig[kmlName];
-                    if (layer.setStyle) {
-                        layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
+
+                    if (layer instanceof L.Marker) {
+                        if (config.customIcon) {
+                            layer.setIcon(config.customIcon);
+                        }
+                    } else {
+                        if (layer.setStyle && config.color) {
+                            layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
+                        }
                     }
+
                     layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info);
                 } else {
-                    if (layer.setStyle) layer.setStyle({ color: "gray", weight: 3 });
+                    if (layer.setStyle && !(layer instanceof L.Marker)) {
+                        layer.setStyle({ color: "gray", weight: 3 });
+                    }
                     layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>");
                 }
             });
