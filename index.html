@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
+    
+    <!-- Plugin สำหรับทำลูกศร -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-arrowheads@1.4.0/src/leaflet-arrowheads.min.js"></script>
 
     <style>
         body { margin: 0; padding: 0; font-family: 'Sarabun', Tahoma, sans-serif; }
@@ -45,9 +48,7 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // ==========================================
-        // 1. สร้างรูปหมุด (ใช้แบบที่ 1: เครื่องสูบน้ำสีน้ำเงิน)
-        // ==========================================
+        // เตรียมรูปไอคอนเครื่องสูบน้ำไว้ เผื่อคุณมีการปักหมุดสถานีสูบน้ำในอนาคต
         var pumpIcon = L.icon({
             iconUrl: 'https://cdn-icons-png.flaticon.com/512/3299/3299935.png', 
             iconSize: [30, 30], 
@@ -56,51 +57,68 @@
         });
 
         // ==========================================
-        // 2. ตั้งค่าข้อมูล Layer (เชื่อมชื่อใน KML กับสี/รูปไอคอน)
+        // 📍 ตั้งค่าข้อมูล Layer ของคุณ
         // ==========================================
         var layerConfig = {
-            "คลอง A": { 
-                name: "คลองสายหลัก", 
-                color: "#007bff", 
-                info: "รับน้ำจากภายนอก สถานะ: ปกติ" 
-            },
-            "คลอง B": { 
-                name: "คลองระบายน้ำ", 
-                color: "#28a745", 
-                info: "สถานะ: ระดับน้ำปกติ" 
-            },
-            "สถานี 1": { 
-                name: "สถานีสูบน้ำหลัก", 
-                info: "สถานะ: กำลังเดินเครื่องสูบ",
-                customIcon: pumpIcon // สั่งให้ใช้รูปปั๊มน้ำ
-            }
+            "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด" },
+            "Klong Soui": { name: "คลองส่วย", color: "#00FFFF", info: "สถานะ: คลองเลียบคลองประปา" },
+            "Untitled path": { name: "คลองบางพัง", color: "#00FFFF", info: "สถานะ: คลอง" },
+            "klong Banmai": { name: "คลองบ้านใหม่", color: "#00FFFF", info: "สถานะ: คลอง" },
+            "Klong Ban Kao": { name: "คลองบ้านเก่า", color: "#00FFFF", info: "สถานะ: คลอง" },
+            "Wat Saluk": { name: "ท่อระบายน้ำซอยวัดสลักเหนือ", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
+            "Tiwanon Pipe": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งเมืองทอง ขนาด .....", color: "#0000FF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
+            "Tiwanon Pipe 2": { name: "ท่อระบายน้ำบนถนนติวานนท์ฝั่งวัดสลักเหนือ ขนาด .....", color: "#00FFFF", info: "สถานะ: ท่อระบายน้ำ ขนาด ....." },
+            "Black Turtle": { name: "ลำรางหนองเต่าดำ", color: "#00FFFF", info: "สถานะ: ลำราง" },
+            "popular pump 4": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 4 2": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 4 -3": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 4 -4": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 4 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 3-1": { name: "ระบบระบายน้ำ popular ไปยัง สถานีสูบน้ำ 3 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 5-1": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 5-2": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Pump 5-3": { name: "ระบบระบายน้ำ สถานีสูบน้ำ 5 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Retention - Pump 3": { name: "ระบบระบายน้ำ รีเทนชั่นแทงค์ไปยัง สถานีสูบ 3 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "IEC - Pump 3": { name: "ระบบระบายน้ำไปยัง สถานีสูบ 3 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Lake to Pump 10": { name: "ระบบระบายน้ำทะเลสาบ ไปยัง สถานีสูบ 10 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "BS - Pump 2": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ 2 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "BS-mST 7": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ มสธ 7", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "bs-mst 8": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ มสธ 7", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "bs-Tiwanon": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "C12-P1": { name: "ระบบระบายน้ำซอย C12  ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "bs - pump 2": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ 2 ", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "BS-MST 1,2": { name: "ระบบระบายน้ำ ไปยัง สถานีสูบ มสธ 1,2", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "IF-RO": { name: "ระบบระบายน้ำแยก IF-วงเวียน Impact", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Lake - IF": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Lake - IF2": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "Lake - IF3": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+            "BS-Tiwanon 2": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" }
         };
 
         // ==========================================
-        // 3. สร้างกล่อง Legend มุมขวาล่าง
+        // 📍 ปรับปรุงกล่อง Legend ให้ตรงกับชุดสีของคุณ
         // ==========================================
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'legend-box');
             div.innerHTML = `
                 <h4>สัญลักษณ์</h4>
-                <div><span class="color-box" style="background: #007bff;"></span> คลองสายหลัก</div>
-                <div><span class="color-box" style="background: #28a745;"></span> คลองระบายน้ำ</div>
+                <div><span class="color-box" style="background: #00FFFF;"></span> คลอง / ลำราง</div>
+                <div><span class="color-box" style="background: #0000FF;"></span> ท่อระบายน้ำหลัก</div>
+                <div><span class="color-box" style="background: #FFFF00;"></span> ระบบระบายน้ำภายใน</div>
                 <div><img src="https://cdn-icons-png.flaticon.com/512/3299/3299935.png" style="width:16px; vertical-align:middle; margin-right:6px;"> สถานีสูบน้ำ</div>
-                <div><span class="color-box" style="background: gray;"></span> อื่นๆ (ยังไม่ได้ระบุสี)</div>
+                <div><span class="color-box" style="background: gray;"></span> เส้นที่ยังไม่ระบุข้อมูล</div>
             `;
             return div;
         };
         legend.addTo(map);
 
         // ==========================================
-        // 4. โหลดไฟล์ KML และประมวลผลล็อคหน้าจอ
+        // โหลดไฟล์ KML และจัดการแผนที่
         // ==========================================
         var kmlLayer = omnivore.kml('MTT.kml').addTo(map);
 
         kmlLayer.on('ready', function() {
             var kmlBounds = kmlLayer.getBounds();
-            
             map.fitBounds(kmlBounds, { padding: [20, 20] });
 
             setTimeout(function() {
@@ -109,7 +127,6 @@
                 map.setMinZoom(map.getZoom());
             }, 500);
 
-            // แยกว่าเป็น เส้น (เปลี่ยนสี) หรือ เป็นหมุด (เปลี่ยนไอคอน)
             kmlLayer.eachLayer(function(layer) {
                 if (!layer.feature || !layer.feature.properties) return;
                 
@@ -119,12 +136,20 @@
                     var config = layerConfig[kmlName];
 
                     if (layer instanceof L.Marker) {
-                        if (config.customIcon) {
-                            layer.setIcon(config.customIcon);
-                        }
+                        if (config.customIcon) layer.setIcon(config.customIcon);
                     } else {
-                        if (layer.setStyle && config.color) {
+                        if (layer.setStyle) {
                             layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
+                            
+                            // เสกลูกศรลงบนเส้น
+                            if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+                                layer.arrowheads({
+                                    size: '12px',      
+                                    frequency: '80px', 
+                                    fill: true,
+                                    color: config.color 
+                                });
+                            }
                         }
                     }
 
