@@ -49,7 +49,6 @@
             center: [13.913, 100.540], 
             zoom: 14,
             maxBoundsViscosity: 1.0,
-            // 📍 สั่งห้ามไม่ให้แผนที่แอบปิด Popup เองอัตโนมัติ
             closePopupOnClick: false 
         });
 
@@ -57,6 +56,7 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        // 📍 แก้ไขจุดที่ 1: เปลี่ยนลิงก์ยาวๆ เป็นไฟล์ pump.png ที่อัปโหลดไว้
         var pumpIcon = L.icon({
             iconUrl: 'pump.png', 
             iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] 
@@ -105,23 +105,23 @@
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'legend-box');
+            // 📍 แก้ไขจุดที่ 2: เปลี่ยนรูปลิงก์ในกล่องสัญลักษณ์เป็น pump.png ด้วย
             div.innerHTML = `
                 <h4>สัญลักษณ์</h4>
                 <div><span class="color-box" style="background: #00FFFF;"></span> คลอง / ลำราง</div>
                 <div><span class="color-box" style="background: #0000FF;"></span> ท่อระบายน้ำหลัก</div>
                 <div><span class="color-box" style="background: #FFFF00;"></span> ระบบระบายน้ำภายใน</div>
-                <div><img src="https://cdn-icons-png.flaticon.com/512/3299/3299935.png" style="width:16px; vertical-align:middle; margin-right:6px;"> สถานีสูบน้ำ</div>
+                <div><img src="pump.png" style="width:16px; vertical-align:middle; margin-right:6px;"> สถานีสูบน้ำ</div>
             `;
             return div;
         };
         legend.addTo(map);
 
         // ==========================================
-        // 📍 ตัวแปรเก็บลำดับเส้นที่ผู้ใช้ "คลิกเลือก (Multi-Choice)"
+        // ตัวแปรเก็บลำดับเส้นที่ผู้ใช้คลิก
         // ==========================================
         var activeSequence = []; 
 
-        // ฟังก์ชันสั่งให้เส้นวิ่งต่อกันตามลำดับที่คลิก
         function updateFlowSequence() {
             activeSequence.forEach(function(item, index) {
                 if (item.layer.flowTimeout) clearTimeout(item.layer.flowTimeout);
@@ -135,9 +135,8 @@
             });
         }
 
-        // 📍 เมื่อคลิกพื้นหลังแผนที่ ให้ปิดกล่องและล้างค่าทุกเส้น (เคลียร์คิวทั้งหมด)
         map.on('click', function() {
-            var currentActive = activeSequence.slice(); // คัดลอกค่าไว้ก่อนลบ
+            var currentActive = activeSequence.slice(); 
             currentActive.forEach(function(item) {
                 item.layer.closePopup();
             });
@@ -190,14 +189,11 @@
                                     }]
                                 }).addTo(map);
 
-                                // 📍 ป้องกันไม่ให้การคลิกเส้น ทะลุไปโดนพื้นหลังแผนที่
                                 layer.on('click', function(e) {
                                     L.DomEvent.stopPropagation(e.originalEvent);
                                 });
 
-                                // เมื่อกล่องข้อความเปิด (ถูกเลือก)
                                 layer.on('popupopen', function() {
-                                    // เช็คกันเหนียวไม่ให้เส้นเดิมเด้งซ้ำเข้าคิว
                                     var exists = activeSequence.some(function(item) { return item.layer === layer; });
                                     if (!exists) {
                                         activeSequence.push({ layer: layer, color: config.color });
@@ -205,7 +201,6 @@
                                     }
                                 });
 
-                                // เมื่อกล่องข้อความปิด (ถูกยกเลิก)
                                 layer.on('popupclose', function() {
                                     activeSequence = activeSequence.filter(function(item) { 
                                         return item.layer !== layer; 
@@ -217,14 +212,12 @@
                                         layer.setStyle({ weight: 4, color: config.color });
                                     }
                                     
-                                    // จัดลำดับเส้นที่เหลือให้วิ่งต่อแบบไร้รอยต่อ
                                     updateFlowSequence();
                                 });
                             }
                         }
                     }
 
-                    // 📍 สั่งให้เปิดกล่องค้างไว้ได้หลายอัน (สำคัญมาก)
                     layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info, { 
                         autoClose: false, 
                         closeOnClick: false 
