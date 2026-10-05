@@ -48,7 +48,9 @@
         var map = L.map('map', {
             center: [13.913, 100.540], 
             zoom: 14,
-            maxBoundsViscosity: 1.0 
+            maxBoundsViscosity: 1.0,
+            // 📍 สั่งห้ามไม่ให้แผนที่แอบปิด Popup เองอัตโนมัติ
+            closePopupOnClick: false 
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -61,8 +63,7 @@
         });
 
         // ==========================================
-        // 📍 ฐานข้อมูล LAYER อย่างเดียวเลย! โคตรคลีน
-        // (ต้องการกลับทิศเส้นไหน ก็ใส่ reverse: true เหมือนเดิม)
+        // ข้อมูล Layer ตามที่คุณระบุมา
         // ==========================================
         var layerConfig = {
             "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด", reverse: true },
@@ -120,25 +121,24 @@
         // ==========================================
         var activeSequence = []; 
 
-        // ฟังก์ชันสั่งอัปเดตการวิ่งใหม่ทุกครั้งที่ผู้ใช้คลิกเพิ่ม/ลดเส้น
+        // ฟังก์ชันสั่งให้เส้นวิ่งต่อกันตามลำดับที่คลิก
         function updateFlowSequence() {
             activeSequence.forEach(function(item, index) {
-                // ยกเลิกระบบหน่วงเวลาเก่าทิ้งก่อน
                 if (item.layer.flowTimeout) clearTimeout(item.layer.flowTimeout);
                 
-                // คำนวณลำดับใหม่ (คลิกก่อนวิ่งก่อน)
                 item.layer.flowTimeout = setTimeout(function() {
                     if (item.layer.getElement()) {
                         item.layer.getElement().classList.add('flow-line');
-                        item.layer.setStyle({ weight: 6, color: '#FF3333' }); // วิ่งด้วยสีแดงจะได้เด่นๆ
+                        item.layer.setStyle({ weight: 6, color: '#FF3333' }); 
                     }
-                }, index * 800); // ส่งต่อทุกๆ 0.8 วินาที
+                }, index * 800); 
             });
         }
 
-        // 📍 เมื่อคลิกพื้นหลังแผนที่ ให้เคลียร์ทุกเส้นที่ถูกเลือกทิ้งทั้งหมด
+        // 📍 เมื่อคลิกพื้นหลังแผนที่ ให้ปิดกล่องและล้างค่าทุกเส้น (เคลียร์คิวทั้งหมด)
         map.on('click', function() {
-            activeSequence.forEach(function(item) {
+            var currentActive = activeSequence.slice(); // คัดลอกค่าไว้ก่อนลบ
+            currentActive.forEach(function(item) {
                 item.layer.closePopup();
             });
         });
@@ -171,7 +171,6 @@
                             
                             if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
                                 
-                                // ระบบกลับทิศ
                                 if (config.reverse) {
                                     var latlngs = layer.getLatLngs();
                                     if (latlngs.length > 0 && Array.isArray(latlngs[0])) {
@@ -181,7 +180,6 @@
                                     }
                                 }
 
-                                // วาดลูกศร
                                 L.polylineDecorator(layer, {
                                     patterns: [{
                                         offset: 25, repeat: 80, 
@@ -192,13 +190,22 @@
                                     }]
                                 }).addTo(map);
 
-                                // 📍 ระบบ Multi-Choice (จดจำลำดับการคลิก)
-                                layer.on('popupopen', function() {
-                                    activeSequence.push({ layer: layer, color: config.color });
-                                    updateFlowSequence();
+                                // 📍 ป้องกันไม่ให้การคลิกเส้น ทะลุไปโดนพื้นหลังแผนที่
+                                layer.on('click', function(e) {
+                                    L.DomEvent.stopPropagation(e.originalEvent);
                                 });
 
-                                // 📍 เมื่อปิดกล่องข้อความ ให้เอาออกจากคิว
+                                // เมื่อกล่องข้อความเปิด (ถูกเลือก)
+                                layer.on('popupopen', function() {
+                                    // เช็คกันเหนียวไม่ให้เส้นเดิมเด้งซ้ำเข้าคิว
+                                    var exists = activeSequence.some(function(item) { return item.layer === layer; });
+                                    if (!exists) {
+                                        activeSequence.push({ layer: layer, color: config.color });
+                                        updateFlowSequence();
+                                    }
+                                });
+
+                                // เมื่อกล่องข้อความปิด (ถูกยกเลิก)
                                 layer.on('popupclose', function() {
                                     activeSequence = activeSequence.filter(function(item) { 
                                         return item.layer !== layer; 
@@ -210,21 +217,27 @@
                                         layer.setStyle({ weight: 4, color: config.color });
                                     }
                                     
-                                    // จัดคิวให้เส้นที่เหลือวิ่งต่อแบบไม่สะดุด
+                                    // จัดลำดับเส้นที่เหลือให้วิ่งต่อแบบไร้รอยต่อ
                                     updateFlowSequence();
                                 });
                             }
                         }
                     }
 
-                    // 📍 อนุญาตให้เปิด Popup ค้างไว้ได้หลายอันพร้อมกัน จะได้คลิกเรียงเส้นได้!
-                    layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info, { autoClose: false });
+                    // 📍 สั่งให้เปิดกล่องค้างไว้ได้หลายอัน (สำคัญมาก)
+                    layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info, { 
+                        autoClose: false, 
+                        closeOnClick: false 
+                    });
                     
                 } else {
                     if (layer.setStyle && !(layer instanceof L.Marker)) {
                         layer.setStyle({ color: "gray", weight: 3 });
                     }
-                    layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>", { autoClose: false });
+                    layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>", { 
+                        autoClose: false, 
+                        closeOnClick: false 
+                    });
                 }
             });
         });
