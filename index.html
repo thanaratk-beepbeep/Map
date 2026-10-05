@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแผนผังน้ำ (Interactive)</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+
+        /* 1. กล่องคลุมแผนที่ */
+        .map-container {
+            position: relative;
+            display: inline-block; /* ให้กล่องพอดีกับขนาดรูป */
+            border: 2px solid #ccc;
+            background-color: #fff;
+            max-width: 100%;
+            overflow: auto; /* เผื่อรูปใหญ่กว่าหน้าจอ จะเลื่อนดูได้ */
+        }
+
+        /* 2. รูปแผนที่พื้นหลัง */
+        .map-image {
+            display: block;
+            /* คุณสามารถอ้างอิงไฟล์รูปภาพต้นฉบับของคุณได้ที่นี่ */
+            /* src="image_b1ffc7.jpg" */
+        }
+
+        /* 3. สไตล์ของจุด Marker */
+        .marker {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transform: translate(-50%, -50%); /* จัดให้ X,Y อยู่กึ่งกลางจุดพอดี */
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.3); /* ขยายเมื่อเอาเมาส์ชี้ */
+        }
+
+        /* สีสถานะต่างๆ */
+        .status-normal { background-color: #28a745; } /* สีเขียว */
+        .status-closed { background-color: #dc3545; } /* สีแดง */
+        .status-pump { background-color: #007bff; }   /* สีน้ำเงิน */
+
+        /* 4. กล่องแสดงข้อมูลเวลาคลิก */
+        #info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-left: 5px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 400px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>สถานะประตูระบายน้ำและสถานีสูบน้ำ</h2>
+    
+    <button onclick="simulateUpdate()" style="margin-bottom: 15px; padding: 10px;">
+        🔄 จำลองการอัปเดตข้อมูลจากเซิร์ฟเวอร์
+    </button>
+
+    <!-- พื้นที่แผนที่ -->
+    <div class="map-container">
+        <!-- ใส่รูปภาพของคุณที่นี่ -->
+        <img src="image_b1ffc7.jpg" alt="Map" class="map-image" width="800" />
+
+        <!-- 
+            จุด Marker บนแผนที่: 
+            กำหนดตำแหน่งด้วย left (แกน X จากซ้าย) และ top (แกน Y จากบน)
+            สมมติพิกัดให้ดู 3 จุด 
+        -->
+        <div id="station1" class="marker status-normal" style="left: 150px; top: 120px;" 
+             onclick="showInfo('สถานีสูบน้ำปากคลองบางพัง', 'กำลังทำงานปกติ', '🟢 เปิด')"></div>
+
+        <div id="station2" class="marker status-pump" style="left: 300px; top: 350px;" 
+             onclick="showInfo('ประตูระบายน้ำคลองบางพพูด', 'สูบน้ำออก', '🔵 กำลังสูบ')"></div>
+
+        <div id="station3" class="marker status-closed" style="left: 550px; top: 500px;" 
+             onclick="showInfo('สถานีสูบน้ำคลองสันทัด', 'ปิดซ่อมบำรุง', '🔴 ปิด')"></div>
+    </div>
+
+    <!-- กล่องแสดงรายละเอียด -->
+    <div id="info-box">
+        <h3 id="info-name" style="margin-top: 0;">ชื่อสถานที่</h3>
+        <p><strong>รายละเอียด:</strong> <span id="info-desc">-</span></p>
+        <p><strong>สถานะปัจจุบัน:</strong> <span id="info-status">-</span></p>
+    </div>
+
+    <script>
+        // ฟังก์ชันแสดงข้อมูลเมื่อคลิกจุดบนแผนที่
+        function showInfo(name, desc, status) {
+            document.getElementById('info-box').style.display = 'block';
+            document.getElementById('info-name').innerText = name;
+            document.getElementById('info-desc').innerText = desc;
+            document.getElementById('info-status').innerText = status;
+        }
+
+        // ฟังก์ชันจำลองเมื่อมีการดึงข้อมูลอัปเดต (เช่น ดึงผ่าน get_json_station)
+        function simulateUpdate() {
+            // สมมติว่าดึงข้อมูลมาแล้วพบว่า "สถานีที่ 1" พัง ต้องเปลี่ยนเป็นสีแดง
+            const station1 = document.getElementById('station1');
+            station1.className = 'marker status-closed'; 
+            
+            // อัปเดตข้อมูลที่จะแสดงตอนคลิกด้วย
+            station1.setAttribute('onclick', "showInfo('สถานีสูบน้ำปากคลองบางพัง', 'หยุดทำงานชั่วคราว', '🔴 ปิด')");
+            
+            alert('อัปเดตข้อมูลสำเร็จ! (สังเกตจุดซ้ายบนเปลี่ยนเป็นสีแดง)');
+        }
+    </script>
+
+</body>
+</html>
