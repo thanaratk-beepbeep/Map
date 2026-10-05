@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ระบบแผนที่ เมืองทองธานี (MTT) - Multi Choice Flow</title>
+    <title>ระบบแผนที่ เมืองทองธานี (MTT) - Smart Panel Flow</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -14,6 +14,7 @@
         body { margin: 0; padding: 0; font-family: 'Sarabun', Tahoma, sans-serif; }
         #map { height: 100vh; width: 100vw; }
 
+        /* 📍 กล่องอธิบายสี (ขวาล่าง) */
         .legend-box {
             background: white; padding: 10px 15px; border-radius: 5px;
             box-shadow: 0 0 15px rgba(0,0,0,0.2); line-height: 1.5rem;
@@ -24,7 +25,48 @@
             display: inline-block; width: 20px; height: 10px;
             margin-right: 8px; border: 1px solid #999;
         }
+
+        /* 📍 แผงข้อมูลใหม่ (ขวาบน) */
+        .info-panel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 5px;
+            pointer-events: none; /* ปล่อยให้คลิกทะลุช่องว่างได้ */
+        }
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 6px solid;
+            padding: 12px 30px 12px 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 220px;
+            font-size: 13px;
+            position: relative;
+            pointer-events: auto; /* ให้กล่องรับคลิกได้ */
+            animation: slideIn 0.3s ease;
+        }
+        .info-card h4 { margin: 0 0 5px 0; font-size: 15px; color: #222; }
+        .info-card p { margin: 0; color: #555; }
+        .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            cursor: pointer;
+            color: #999;
+            font-size: 16px;
+            line-height: 1;
+        }
+        .close-btn:hover { color: #d9534f; }
         
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* อนิเมชั่นเส้นไหล */
         .flow-line {
             stroke-dasharray: 12, 12 !important; 
             animation: flow-animation 1s linear infinite; 
@@ -48,8 +90,7 @@
         var map = L.map('map', {
             center: [13.913, 100.540], 
             zoom: 14,
-            maxBoundsViscosity: 1.0,
-            closePopupOnClick: false 
+            maxBoundsViscosity: 1.0
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -58,14 +99,13 @@
 
         var pumpIcon = L.icon({
             iconUrl: 'pump.png', 
-            iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] 
+            iconSize: [30, 30], iconAnchor: [15, 30]
         });
 
         // ==========================================
-        // ข้อมูล Layer (อัปเดตล่าสุด)
+        // ข้อมูล Layer (ฐานข้อมูลเดิมเป๊ะ)
         // ==========================================
         var layerConfig = {
-            // --- ข้อมูลเส้นคลองและท่อ ---
             "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด", reverse: true },
             "Klong Soui": { name: "คลองส่วย", color: "#00FFFF", info: "สถานะ: คลองเลียบคลองประปา" },
             "Untitled path": { name: "คลองบางพัง", color: "#00FFFF", info: "สถานะ: คลอง", reverse: true },
@@ -100,8 +140,6 @@
             "Lake - IF2": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Lake - IF3": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "BS- Tiwanon 2": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
-
-            // --- ข้อมูลหมุดสถานีสูบน้ำ (อัปเดตล่าสุด) ---
             "PS Wat Koa": { name: "สถานีสูบน้ำคลองบางพูด วัดเกาะพญาเจ๋ง 1", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
             "PS Parkkret 13": { name: "สถานีสูบคลองบางพูด ปากเกร็ด 13", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
             "PS Klong Suai": { name: "สถานีสูบคลองบางพูด เชื่อมคลองส่วย", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
@@ -124,6 +162,19 @@
             "MST-8": { name: "สถานีสูบน้ำ มสธ8", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon }
         };
 
+        // ==========================================
+        // 📍 1. สร้างแผงควบคุมหลักไว้ที่มุมขวาบน
+        // ==========================================
+        var infoControl = L.control({ position: 'topright' });
+        infoControl.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info-panel-container');
+            div.id = 'info-panel';
+            L.DomEvent.disableClickPropagation(div); // ป้องกันการคลิกทะลุกล่อง
+            return div;
+        };
+        infoControl.addTo(map);
+
+        // กล่อง Legend มุมขวาล่าง
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'legend-box');
@@ -139,7 +190,7 @@
         legend.addTo(map);
 
         // ==========================================
-        // ตัวแปรเก็บลำดับเส้นที่ผู้ใช้คลิก
+        // 📍 2. ระบบคำนวณและวาดเส้นเลเซอร์ชี้เป้า
         // ==========================================
         var activeSequence = []; 
 
@@ -156,10 +207,61 @@
             });
         }
 
+        // ฟังก์ชันอัปเดตเส้นชี้เป้าเวลาขยับแผนที่
+        function updatePointers() {
+            var mapContainer = map.getContainer();
+            var mapRect = mapContainer.getBoundingClientRect();
+
+            activeSequence.forEach(function(item) {
+                if (!item.card || !item.pointerLine) return;
+                
+                // หาพิกัดขอบซ้ายของกล่อง Card บนหน้าจอ
+                var cardRect = item.card.getBoundingClientRect();
+                var x = cardRect.left - mapRect.left - 5; 
+                var y = (cardRect.top + cardRect.bottom) / 2 - mapRect.top;
+                
+                // แปลงพิกัดหน้าจอเป็นพิกัดแผนที่ (เจ๋งตรงนี้แหละ!)
+                var cardLatLng = map.containerPointToLatLng(L.point(x, y));
+                
+                // สั่งให้เส้นวาดจากกล่องไปหาจุดที่คลิก
+                item.pointerLine.setLatLngs([cardLatLng, item.targetLatLng]);
+                item.pointerDeco.setPaths(item.pointerLine); // รีเฟรชหัวลูกศร
+            });
+        }
+
+        // สั่งให้อัปเดตเส้นเลเซอร์ทุกครั้งที่ซูมหรือลากแผนที่
+        map.on('move zoom', updatePointers);
+
+        // ==========================================
+        // 📍 3. ฟังก์ชันกากบาทปิดกล่อง
+        // ==========================================
+        window.removeFlowItem = function(id) {
+            var index = activeSequence.findIndex(function(item) { return item.id === id; });
+            if (index > -1) {
+                var item = activeSequence[index];
+                
+                item.card.remove(); // ลบกล่อง
+                map.removeLayer(item.pointerLine); // ลบเส้นชี้
+                map.removeLayer(item.pointerDeco); // ลบหัวลูกศรชี้
+                
+                // คืนสภาพเส้นคลอง
+                if (item.layer.flowTimeout) clearTimeout(item.layer.flowTimeout);
+                if (item.layer.getElement && item.layer instanceof L.Polyline) {
+                    item.layer.getElement().classList.remove('flow-line');
+                    item.layer.setStyle({ weight: 4, color: item.color });
+                }
+                
+                activeSequence.splice(index, 1);
+                updateFlowSequence();
+                setTimeout(updatePointers, 50); // รอให้กล่องขยับแล้วคำนวณเส้นใหม่
+            }
+        };
+
+        // คลิกล้างกระดาน
         map.on('click', function() {
             var currentActive = activeSequence.slice(); 
             currentActive.forEach(function(item) {
-                item.layer.closePopup();
+                window.removeFlowItem(item.id);
             });
         });
 
@@ -185,12 +287,16 @@
 
                     if (layer instanceof L.Marker) {
                         if (config.customIcon) layer.setIcon(config.customIcon);
+                        // ถ้าคลิกที่หมุด
+                        layer.on('click', function(e) {
+                            L.DomEvent.stopPropagation(e.originalEvent);
+                            handleLayerClick(layer, config, layer.getLatLng());
+                        });
                     } else {
                         if (layer.setStyle) {
                             layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
                             
                             if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
-                                
                                 if (config.reverse) {
                                     var latlngs = layer.getLatLngs();
                                     if (latlngs.length > 0 && Array.isArray(latlngs[0])) {
@@ -210,51 +316,76 @@
                                     }]
                                 }).addTo(map);
 
+                                // ถ้าคลิกที่เส้น
                                 layer.on('click', function(e) {
                                     L.DomEvent.stopPropagation(e.originalEvent);
-                                });
-
-                                layer.on('popupopen', function() {
-                                    var exists = activeSequence.some(function(item) { return item.layer === layer; });
-                                    if (!exists) {
-                                        activeSequence.push({ layer: layer, color: config.color });
-                                        updateFlowSequence();
-                                    }
-                                });
-
-                                layer.on('popupclose', function() {
-                                    activeSequence = activeSequence.filter(function(item) { 
-                                        return item.layer !== layer; 
-                                    });
-                                    
-                                    if (layer.flowTimeout) clearTimeout(layer.flowTimeout);
-                                    if (layer.getElement()) {
-                                        layer.getElement().classList.remove('flow-line');
-                                        layer.setStyle({ weight: 4, color: config.color });
-                                    }
-                                    
-                                    updateFlowSequence();
+                                    handleLayerClick(layer, config, e.latlng);
                                 });
                             }
                         }
                     }
-
-                    layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info, { 
-                        autoClose: false, 
-                        closeOnClick: false 
-                    });
-                    
                 } else {
                     if (layer.setStyle && !(layer instanceof L.Marker)) {
                         layer.setStyle({ color: "gray", weight: 3 });
                     }
-                    layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>", { 
-                        autoClose: false, 
-                        closeOnClick: false 
-                    });
                 }
             });
         });
+
+        // ==========================================
+        // 📍 4. ฟังก์ชันหลักเวลาผู้ใช้คลิกเส้น/หมุด
+        // ==========================================
+        function handleLayerClick(layer, config, targetLatLng) {
+            // เช็คว่าเคยคลิกไปแล้วหรือยัง
+            var exists = activeSequence.some(function(item) { return item.layer === layer; });
+            if (!exists) {
+                // สร้าง ID เฉพาะ
+                var uniqueId = 'item_' + Math.random().toString(36).substr(2, 9);
+                
+                // 4.1 สร้างการ์ดบนขวา
+                var panel = document.getElementById('info-panel');
+                var card = document.createElement('div');
+                card.className = 'info-card';
+                card.id = uniqueId;
+                card.style.borderLeftColor = config.color || '#333';
+                card.innerHTML = `
+                    <span class="close-btn" onclick="removeFlowItem('${uniqueId}')">✖</span>
+                    <h4>${config.name}</h4>
+                    <p>${config.info}</p>
+                `;
+                panel.appendChild(card);
+
+                // 4.2 สร้างเส้นประ (เลเซอร์ชี้เป้า)
+                var pointerLine = L.polyline([targetLatLng, targetLatLng], {
+                    color: config.color || '#666', weight: 2, dashArray: '5,5', opacity: 0.8, interactive: false
+                }).addTo(map);
+
+                var pointerDeco = L.polylineDecorator(pointerLine, {
+                    patterns: [{
+                        offset: '100%', repeat: 0, 
+                        symbol: L.Symbol.arrowHead({
+                            pixelSize: 10, polygon: true, 
+                            pathOptions: { stroke: true, weight: 1, color: config.color || '#666', fillOpacity: 0.8 }
+                        })
+                    }]
+                }).addTo(map);
+
+                // บันทึกลงคิว
+                activeSequence.push({
+                    id: uniqueId,
+                    layer: layer,
+                    color: config.color,
+                    card: card,
+                    targetLatLng: targetLatLng,
+                    pointerLine: pointerLine,
+                    pointerDeco: pointerDeco
+                });
+
+                // สั่งให้อัปเดต
+                updateFlowSequence();
+                setTimeout(updatePointers, 30); // หน่วงนิดนึงให้กล่องสร้างเสร็จค่อยคำนวณเส้น
+            }
+        }
 
     </script>
 </body>
