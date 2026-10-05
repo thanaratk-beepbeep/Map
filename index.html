@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ระบบแผนที่ เมืองทองธานี (MTT)</title>
+    <title>ระบบแผนที่ เมืองทองธานี (MTT) - Multi Choice Flow</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -61,7 +61,8 @@
         });
 
         // ==========================================
-        // 📍 1. ฐานข้อมูล LAYER ของคุณ (อัปเดตตามที่ส่งมาเป๊ะๆ)
+        // 📍 ฐานข้อมูล LAYER อย่างเดียวเลย! โคตรคลีน
+        // (ต้องการกลับทิศเส้นไหน ก็ใส่ reverse: true เหมือนเดิม)
         // ==========================================
         var layerConfig = {
             "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด", reverse: true },
@@ -100,40 +101,6 @@
             "BS- Tiwanon 2": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" }
         };
 
-        // ==========================================
-        // 📍 2. จัดกลุ่ม LAYER ให้วิ่งต่อกัน 
-        // ก๊อปปี้ชื่อจากด้านบน มาเรียงใน [ ] ลำดับการวิ่งจะวิ่งจากซ้ายไปขวา
-        // ==========================================
-        var flowGroups = [
-            // กลุ่มที่ 1: ระบบ Pump 4
-            ["popular pump 4", "Pump 4 2", "Pump 4 -3", "Pump 4 -4"],
-            
-            // กลุ่มที่ 2: ระบบ Pump 5
-            ["Pump 5-1", "Pump 5-2", "Pump 5 -3"],
-            
-            // กลุ่มที่ 3: ระบบ มสธ
-            ["BS-MST 1,2", "BS-mST 7", "bs-mst 8"],
-            
-            // กลุ่มที่ 4: ระบบ ทะเลสาบ (The Laken)
-            ["Lake - IF", "Lake - IF2", "Lake - IF3"],
-            
-            // กลุ่มที่ 5: ระบบ Pump 3 (ตัวอย่าง ถ้าต้องการให้เชื่อมกัน)
-            ["Retention - 1", "Retention - Pump 3", "Pump 3-1", "Pump 3-2", "IEC - PUMP 3"]
-        ];
-
-        // ------------------------------------------
-        // โค้ดแปลงร่าง (จับข้อ 1 กับข้อ 2 มาทำงานร่วมกัน)
-        // ------------------------------------------
-        flowGroups.forEach(function(groupArray, groupIndex) {
-            groupArray.forEach(function(layerName, orderIndex) {
-                if (layerConfig[layerName]) {
-                    layerConfig[layerName].flowGroupId = groupIndex; // กำหนดกลุ่มให้
-                    layerConfig[layerName].flowOrder = orderIndex;   // กำหนดลำดับการวิ่ง
-                }
-            });
-        });
-
-        // สร้างกล่องสัญลักษณ์
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'legend-box');
@@ -142,12 +109,41 @@
                 <div><span class="color-box" style="background: #00FFFF;"></span> คลอง / ลำราง</div>
                 <div><span class="color-box" style="background: #0000FF;"></span> ท่อระบายน้ำหลัก</div>
                 <div><span class="color-box" style="background: #FFFF00;"></span> ระบบระบายน้ำภายใน</div>
+                <div><img src="https://cdn-icons-png.flaticon.com/512/3299/3299935.png" style="width:16px; vertical-align:middle; margin-right:6px;"> สถานีสูบน้ำ</div>
             `;
             return div;
         };
         legend.addTo(map);
 
-        // ประมวลผล KML
+        // ==========================================
+        // 📍 ตัวแปรเก็บลำดับเส้นที่ผู้ใช้ "คลิกเลือก (Multi-Choice)"
+        // ==========================================
+        var activeSequence = []; 
+
+        // ฟังก์ชันสั่งอัปเดตการวิ่งใหม่ทุกครั้งที่ผู้ใช้คลิกเพิ่ม/ลดเส้น
+        function updateFlowSequence() {
+            activeSequence.forEach(function(item, index) {
+                // ยกเลิกระบบหน่วงเวลาเก่าทิ้งก่อน
+                if (item.layer.flowTimeout) clearTimeout(item.layer.flowTimeout);
+                
+                // คำนวณลำดับใหม่ (คลิกก่อนวิ่งก่อน)
+                item.layer.flowTimeout = setTimeout(function() {
+                    if (item.layer.getElement()) {
+                        item.layer.getElement().classList.add('flow-line');
+                        item.layer.setStyle({ weight: 6, color: '#FF3333' }); // วิ่งด้วยสีแดงจะได้เด่นๆ
+                    }
+                }, index * 800); // ส่งต่อทุกๆ 0.8 วินาที
+            });
+        }
+
+        // 📍 เมื่อคลิกพื้นหลังแผนที่ ให้เคลียร์ทุกเส้นที่ถูกเลือกทิ้งทั้งหมด
+        map.on('click', function() {
+            activeSequence.forEach(function(item) {
+                item.layer.closePopup();
+            });
+        });
+
+        // ==========================================
         var kmlLayer = omnivore.kml('MTT.kml').addTo(map);
 
         kmlLayer.on('ready', function() {
@@ -167,94 +163,68 @@
                 if (layerConfig[kmlName]) {
                     var config = layerConfig[kmlName];
 
-                    if (layer.setStyle) {
-                        layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
-                        
-                        if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+                    if (layer instanceof L.Marker) {
+                        if (config.customIcon) layer.setIcon(config.customIcon);
+                    } else {
+                        if (layer.setStyle) {
+                            layer.setStyle({ color: config.color, weight: 4, opacity: 0.9 });
                             
-                            // ระบบกลับทิศ (ดึงคำสั่ง reverse จากฐานข้อมูลของคุณโดยตรง)
-                            if (config.reverse) {
-                                var latlngs = layer.getLatLngs();
-                                if (latlngs.length > 0 && Array.isArray(latlngs[0])) {
-                                    layer.setLatLngs(latlngs.map(function(arr) { return arr.slice().reverse(); }));
-                                } else {
-                                    layer.setLatLngs(latlngs.slice().reverse());
-                                }
-                            }
-
-                            // วาดลูกศร
-                            L.polylineDecorator(layer, {
-                                patterns: [{
-                                    offset: 25, repeat: 80, 
-                                    symbol: L.Symbol.arrowHead({
-                                        pixelSize: 12, polygon: true, 
-                                        pathOptions: { stroke: true, weight: 1, color: config.color, fillOpacity: 1 }
-                                    })
-                                }]
-                            }).addTo(map);
-
-                            // ตอนคลิก (ระบบวิ่งเป็นกลุ่ม)
-                            layer.on('popupopen', function() {
-                                // เช็คว่าเส้นนี้อยู่ในกลุ่ม flowGroups หรือไม่
-                                if (config.flowGroupId !== undefined) {
-                                    var groupLayers = [];
-                                    kmlLayer.eachLayer(function(otherLayer) {
-                                        var otherName = otherLayer.feature?.properties?.name;
-                                        var otherConfig = layerConfig[otherName];
-                                        if (otherConfig && otherConfig.flowGroupId === config.flowGroupId) {
-                                            if (otherLayer.getElement && otherLayer instanceof L.Polyline) {
-                                                groupLayers.push({ targetLayer: otherLayer, order: otherConfig.flowOrder });
-                                            }
-                                        }
-                                    });
-
-                                    // เรียงตามลำดับใน Array 
-                                    groupLayers.sort(function(a, b) { return a.order - b.order; });
-
-                                    groupLayers.forEach(function(item, index) {
-                                        item.targetLayer.flowTimeout = setTimeout(function() {
-                                            item.targetLayer.getElement().classList.add('flow-line');
-                                            item.targetLayer.setStyle({ weight: 6, color: '#FF3333' });
-                                        }, index * 800); 
-                                    });
-                                } else {
-                                    // ถ้าไม่ได้ถูกจัดกลุ่มไว้ ก็วิ่งแค่เส้นตัวเอง
-                                    if (layer.getElement()) {
-                                        layer.getElement().classList.add('flow-line');
-                                        layer.setStyle({ weight: 6, color: '#FF3333' });
+                            if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+                                
+                                // ระบบกลับทิศ
+                                if (config.reverse) {
+                                    var latlngs = layer.getLatLngs();
+                                    if (latlngs.length > 0 && Array.isArray(latlngs[0])) {
+                                        layer.setLatLngs(latlngs.map(function(arr) { return arr.slice().reverse(); }));
+                                    } else {
+                                        layer.setLatLngs(latlngs.slice().reverse());
                                     }
                                 }
-                            });
 
-                            // ตอนปิด (หยุดวิ่ง)
-                            layer.on('popupclose', function() {
-                                if (config.flowGroupId !== undefined) {
-                                    kmlLayer.eachLayer(function(otherLayer) {
-                                        var otherName = otherLayer.feature?.properties?.name;
-                                        var otherConfig = layerConfig[otherName];
-                                        if (otherConfig && otherConfig.flowGroupId === config.flowGroupId) {
-                                            if (otherLayer.getElement && otherLayer instanceof L.Polyline) {
-                                                if (otherLayer.flowTimeout) clearTimeout(otherLayer.flowTimeout);
-                                                otherLayer.getElement().classList.remove('flow-line');
-                                                otherLayer.setStyle({ weight: 4, color: otherConfig.color });
-                                            }
-                                        }
+                                // วาดลูกศร
+                                L.polylineDecorator(layer, {
+                                    patterns: [{
+                                        offset: 25, repeat: 80, 
+                                        symbol: L.Symbol.arrowHead({
+                                            pixelSize: 12, polygon: true, 
+                                            pathOptions: { stroke: true, weight: 1, color: config.color, fillOpacity: 1 }
+                                        })
+                                    }]
+                                }).addTo(map);
+
+                                // 📍 ระบบ Multi-Choice (จดจำลำดับการคลิก)
+                                layer.on('popupopen', function() {
+                                    activeSequence.push({ layer: layer, color: config.color });
+                                    updateFlowSequence();
+                                });
+
+                                // 📍 เมื่อปิดกล่องข้อความ ให้เอาออกจากคิว
+                                layer.on('popupclose', function() {
+                                    activeSequence = activeSequence.filter(function(item) { 
+                                        return item.layer !== layer; 
                                     });
-                                } else {
+                                    
+                                    if (layer.flowTimeout) clearTimeout(layer.flowTimeout);
                                     if (layer.getElement()) {
                                         layer.getElement().classList.remove('flow-line');
                                         layer.setStyle({ weight: 4, color: config.color });
                                     }
-                                }
-                            });
+                                    
+                                    // จัดคิวให้เส้นที่เหลือวิ่งต่อแบบไม่สะดุด
+                                    updateFlowSequence();
+                                });
+                            }
                         }
                     }
-                    layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info);
+
+                    // 📍 อนุญาตให้เปิด Popup ค้างไว้ได้หลายอันพร้อมกัน จะได้คลิกเรียงเส้นได้!
+                    layer.bindPopup("<b>" + config.name + "</b><br><hr>" + config.info, { autoClose: false });
+                    
                 } else {
                     if (layer.setStyle && !(layer instanceof L.Marker)) {
                         layer.setStyle({ color: "gray", weight: 3 });
                     }
-                    layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>");
+                    layer.bindPopup("<i>ยังไม่ได้ตั้งค่า: <b>" + (kmlName || "ไม่มีชื่อ") + "</b></i>", { autoClose: false });
                 }
             });
         });
