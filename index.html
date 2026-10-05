@@ -56,16 +56,17 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // 📍 แก้ไขจุดที่ 1: เปลี่ยนลิงก์ยาวๆ เป็นไฟล์ pump.png ที่อัปโหลดไว้
+        // รูปไอคอนปั๊มน้ำ
         var pumpIcon = L.icon({
             iconUrl: 'pump.png', 
             iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] 
         });
 
         // ==========================================
-        // ข้อมูล Layer ตามที่คุณระบุมา
+        // ข้อมูล Layer (รวมเส้น และ หมุดปั๊มน้ำ)
         // ==========================================
         var layerConfig = {
+            // --- ข้อมูลเส้นคลองและท่อ ---
             "Klong bangpood": { name: "คลองบางพูด", color: "#00FFFF", info: "คลองรับส่งน้ำโดยเฉพาะพื้นที่อำเภอปากเกร็ด", reverse: true },
             "Klong Soui": { name: "คลองส่วย", color: "#00FFFF", info: "สถานะ: คลองเลียบคลองประปา" },
             "Untitled path": { name: "คลองบางพัง", color: "#00FFFF", info: "สถานะ: คลอง", reverse: true },
@@ -99,13 +100,33 @@
             "Lake - IF": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Lake - IF2": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
             "Lake - IF3": { name: "ระบบระบายน้ำทะเลสาบผ่าน The Laken", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
-            "BS- Tiwanon 2": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" }
+            "BS- Tiwanon 2": { name: "ระบบระบายน้ำ ไปยัง ถนนติวานนท์", color: "#FFFF00", info: "สถานะ: ท่อระบายน้ำ" },
+
+            // --- ข้อมูลหมุดสถานีสูบน้ำ ---
+            "PS Wat Koa": { name: "สถานีสูบน้ำคลองบางพูด วัดเกาะพญาเจ๋ง 1", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS Parkkret 13": { name: "สถานีสูบคลองบางพูด ปากเกร็ด 13", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS Klong Suai": { name: "สถานีสูบคลองบางพูด เชื่อมคลองส่วย", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS4": { name: "สถานีสูบน้ำ 4", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS Klong - banmai": { name: "สถานีสูบน้ำคลองส่วย - คลองบ้านใหม่", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS Wat Saluk": { name: "สถานีสูบน้ำวัดสลักเหนือ", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS Bangplung": { name: "สถานีสูบน้ำปากคลองบางพัง", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "MP - BS": { name: "เครื่องสูบน้ำ Mobile ติวานนท์", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "C12-1": { name: "สถานีสูบน้ำ C12-No.1", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "C12-2": { name: "สถานีสูบน้ำ C12-No.2", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS2": { name: "สถานีสูบน้ำ 2", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS3": { name: "สถานีสูบน้ำ 3", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS5": { name: "สถานีสูบน้ำ 5", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS9": { name: "สถานีสูบน้ำ 9", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "PS 10": { name: "สถานีสูบน้ำ 10", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "MST1": { name: "สถานีสูบน้ำ มสธ1", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "MST2": { name: "สถานีสูบน้ำ มสธ2", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "MST-7": { name: "สถานีสูบน้ำ มสธ7", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon },
+            "MST-8": { name: "สถานีสูบน้ำ มสธ8", info: "จำนวนเครื่องสูบน้ำ .... อัตราการระบายสูงสุด.....", customIcon: pumpIcon }
         };
 
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'legend-box');
-            // 📍 แก้ไขจุดที่ 2: เปลี่ยนรูปลิงก์ในกล่องสัญลักษณ์เป็น pump.png ด้วย
             div.innerHTML = `
                 <h4>สัญลักษณ์</h4>
                 <div><span class="color-box" style="background: #00FFFF;"></span> คลอง / ลำราง</div>
